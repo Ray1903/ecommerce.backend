@@ -1,4 +1,24 @@
-// import type { Core } from '@strapi/strapi';
+import type { Core } from '@strapi/strapi';
+
+const PUBLIC_ROLE_UID = 'plugin::users-permissions.role';
+
+const REQUIRED_ROLES = [
+  {
+    name: 'customer',
+    type: 'customer',
+    description: 'Comprador de la plataforma',
+  },
+  {
+    name: 'seller',
+    type: 'seller',
+    description: 'Vendedor pendiente o aprobado para operar en la plataforma',
+  },
+  {
+    name: 'delivery',
+    type: 'delivery',
+    description: 'Repartidor de la plataforma',
+  },
+];
 
 export default {
   /**
@@ -16,5 +36,17 @@ export default {
    * This gives you an opportunity to set up your data model,
    * run jobs, or perform some special logic.
    */
-  bootstrap(/* { strapi }: { strapi: Core.Strapi } */) {},
+  async bootstrap({ strapi }: { strapi: Core.Strapi }) {
+    for (const roleData of REQUIRED_ROLES) {
+      const existingRole = await strapi.db.query(PUBLIC_ROLE_UID).findOne({
+        where: { type: roleData.type },
+      });
+
+      if (!existingRole) {
+        await strapi.db.query(PUBLIC_ROLE_UID).create({
+          data: roleData,
+        });
+      }
+    }
+  },
 };

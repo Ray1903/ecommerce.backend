@@ -1,0 +1,69 @@
+{
+  "kind": "collectionType",
+  "collectionName": "adresses",
+  "info": {
+    "singularName": "adress",
+    "pluralName": "adresses",
+    "displayName": "Adress"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "label": {
+      "type": "string"
+    },
+    "recipientName": {
+      "type": "string"
+    },
+    "street": {
+      "type": "string"
+    },
+    "externalNumber": {
+      "type": "string"
+    },
+    "internalNumber": {
+      "type": "string"
+    },
+    "neighborhood": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string"
+    },
+    "zipCode": {
+      "type": "string"
+    },
+    "references": {
+      "type": "text"
+    },
+    "lat": {
+      "type": "float"
+    },
+    "lng": {
+      "type": "float"
+    },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "adresses"
+    },
+    "isDefault": {
+      "type": "boolean"
+    },
+    "orders": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::order.order",
+      "mappedBy": "adress"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string"
+    }
+  }
+}

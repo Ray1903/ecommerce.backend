@@ -1,0 +1,46 @@
+{
+  "kind": "collectionType",
+  "collectionName": "delivery_assigments",
+  "info": {
+    "singularName": "delivery-assigment",
+    "pluralName": "delivery-assigments",
+    "displayName": "deliveryAssigment"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "statusDelivery": {
+      "type": "enumeration",
+      "enum": [
+        "pending",
+        "assigned",
+        "picked_up",
+        "delivered",
+        "failed"
+      ]
+    },
+    "assignedAt": {
+      "type": "datetime"
+    },
+    "deliveredAt": {
+      "type": "datetime"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "order": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::order.order",
+      "inversedBy": "deliveryAssigment"
+    },
+    "deliveryUser": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "deliveryAssigments"
+    }
+  }
+}
