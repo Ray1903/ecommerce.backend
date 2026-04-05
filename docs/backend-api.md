@@ -21,7 +21,7 @@ Puntos importantes para frontend:
   - `adresses`
   - `delivery-assigment`
   - `delivery-assigments`
-- Los roles `customer`, `seller` y `delivery` se aseguran automaticamente en el `bootstrap` del backend.
+- Los roles `customer`, `seller`, `delivery` y `operations` se aseguran automaticamente en el `bootstrap` del backend.
 
 ## Ejecucion local
 
@@ -112,8 +112,8 @@ Notas de comportamiento:
 
 - no devuelve JWT automatico
 - crea el usuario con rol `seller`
-- crea el perfil `seller` con `status = pending`
-- frontend no debe mostrar funcionalidades de seller hasta que `status = approved`
+- crea el perfil `seller` con `approvalStatus = pending`
+- frontend no debe mostrar funcionalidades de seller hasta que `approvalStatus = approved`
 
 Respuesta:
 
@@ -128,7 +128,7 @@ Respuesta:
   "seller": {
     "id": 1,
     "documentId": "xxxxx",
-    "status": "pending",
+    "approvalStatus": "pending",
     "storeName": "Mi Tienda"
   },
   "role": "seller"
@@ -179,7 +179,7 @@ Authorization: Bearer <jwt>
 Nota para seller:
 
 - un seller pendiente puede iniciar sesion si sus credenciales son validas
-- el frontend debe consultar el perfil relacionado y bloquear el dashboard seller mientras `seller.status !== 'approved'`
+- el frontend debe consultar el perfil relacionado y bloquear el dashboard seller mientras `seller.approvalStatus !== 'approved'`
 
 ### Campos extendidos del usuario
 
@@ -187,6 +187,7 @@ El modelo `user` fue extendido con:
 
 - `firstName`: `string`
 - `phone`: `string`
+- `profileImage`: media imagen unica
 - `isActive`: `boolean`
 - `seller`: relacion one-to-one con `seller`
 - `orders`: relacion one-to-many con `order`
@@ -275,6 +276,8 @@ Campos:
 - `price`: `decimal`, requerido
 - `unit`: enum `kg | pieza | caja | manojo | bolsa`
 - `minOrderQty`: `decimal`
+- `stock`: `decimal`, default `0`
+- `images`: media multiple de imagenes
 - `isActive`: `boolean`, default `true`
 - `seller`: many-to-one -> `seller`
 - `category`: many-to-one -> `category`
@@ -284,7 +287,7 @@ Queries utiles:
 
 - `GET /api/products?filters[isActive][$eq]=true&populate=seller,category`
 - `GET /api/products?filters[slug][$eq]=tomate-saladette&populate=*`
-- `GET /api/products?filters[category][slug][$eq]=frutas&populate=category,seller`
+- `GET /api/products?filters[category][slug][$eq]=frutas&populate=category,seller,images`
 
 Ejemplo de creacion:
 
@@ -292,16 +295,22 @@ Ejemplo de creacion:
 {
   "data": {
     "name": "Tomate Saladette",
-    "sku": "TOM-001",
     "price": 42.5,
     "unit": "kg",
     "minOrderQty": 1,
+    "stock": 30,
+    "images": [1, 2, 3],
     "isActive": true,
     "seller": 1,
     "category": 3
   }
 }
 ```
+
+Notas:
+
+- `sku` es opcional al crear y se genera automaticamente despues de crear el producto
+- `slug` tambien se recalcula automaticamente despues de crear el producto usando `name` e `id`
 
 ## `category`
 
@@ -327,11 +336,89 @@ Campos:
 - `parent`: many-to-one -> `category`
 - `children`: one-to-many -> `category`
 - `products`: one-to-many -> `product`
+- `warehouses`: many-to-many -> `warehouse`
 
 Queries utiles:
 
 - `GET /api/categories?filters[parent][id][$null]=true&populate=children,image`
 - `GET /api/categories?filters[slug][$eq]=verduras&populate=parent,children,image`
+
+Notas:
+
+- `slug` se recalcula automaticamente despues de crear la categoria usando `name` e `id`
+
+## `warehouse`
+
+Rutas:
+
+- `GET /api/warehouses`
+- `GET /api/warehouses/:documentId`
+- `POST /api/warehouses`
+- `PUT /api/warehouses/:documentId`
+- `DELETE /api/warehouses/:documentId`
+
+Draft/publish:
+
+- Desactivado
+
+Campos:
+
+- `name`: `string`, requerido, unico
+- `slug`: `uid`, generado desde `name`
+- `code`: `string`, requerido, unico
+- `description`: `text`
+- `address`: `text`, requerido
+- `city`: `string`, requerido
+- `state`: `string`, requerido
+- `postalCode`: `string`
+- `contactPhone`: `string`
+- `contactEmail`: `email`
+- `managerName`: `string`
+- `produceFocus`: enum `fruits | vegetables | mixed`, default `mixed`
+- `storageMode`: enum `ambient | refrigerated | mixed`, default `ambient`
+- `operatingHours`: `text`
+- `capacityKg`: `decimal`
+- `minimumTemperature`: `decimal`
+- `maximumTemperature`: `decimal`
+- `acceptedCategories`: many-to-many -> `category`
+- `isActive`: `boolean`, default `true`
+- `sellers`: one-to-many -> `seller`
+
+Queries utiles:
+
+- `GET /api/warehouses?filters[isActive][$eq]=true&populate=acceptedCategories,sellers`
+- `GET /api/warehouses?filters[produceFocus][$eq]=mixed&filters[storageMode][$eq]=refrigerated`
+- `GET /api/warehouses?filters[city][$eq]=Veracruz&populate=acceptedCategories`
+
+Payload sugerido:
+
+```json
+{
+  "name": "Centro Frio Golfo",
+  "code": "CFG-VER-01",
+  "description": "Centro para recepcion, preenfriado y resguardo de frutas y verduras",
+  "address": "Av. Industrial 20, Zona Portuaria",
+  "city": "Veracruz",
+  "state": "Veracruz",
+  "postalCode": "91700",
+  "contactPhone": "2291234567",
+  "contactEmail": "operaciones@centrofrio.mx",
+  "managerName": "Ana Perez",
+  "produceFocus": "mixed",
+  "storageMode": "refrigerated",
+  "operatingHours": "Lunes a sabado de 06:00 a 18:00",
+  "capacityKg": 25000,
+  "minimumTemperature": 2,
+  "maximumTemperature": 8,
+  "acceptedCategories": [1, 2, 3],
+  "isActive": true
+}
+```
+
+Notas:
+
+- este content type reutiliza el uid `warehouse` existente del proyecto para no romper la asignacion de almacenes en sellers
+- `slug` se recalcula automaticamente despues de crear el almacen usando `name` e `id`
 
 ## `seller`
 
@@ -353,17 +440,26 @@ Campos:
 - `slug`: `uid`, generado desde `storeName`
 - `description`: `string`
 - `contactPhone`: `string`
+- `address`: `json`
 - `isVerified`: `boolean`, default `false`
-- `status`: enum `pending | approved | rejected`, default `pending`
+- `approvalStatus`: enum `pending | approved | rejected`, default `pending`
+- `warehouseAssignmentStatus`: enum `pending | assigned`, default `pending`
+- `deliveryInstructions`: `text`
+- `assignedWarehouse`: many-to-one -> `warehouse`
 - `users_permissions_user`: one-to-one -> `user`
 - `products`: one-to-many -> `product`
 - `order_items`: one-to-many -> `order-item`
+- `deliveryRequests`: one-to-many -> `delivery-request`
 
 Queries utiles:
 
 - `GET /api/sellers?populate=products`
 - `GET /api/sellers?filters[slug][$eq]=mi-tienda&populate=products,users_permissions_user`
-- `GET /api/sellers?filters[status][$eq]=approved&populate=products`
+- `GET /api/sellers?filters[approvalStatus][$eq]=approved&populate=products`
+
+Notas:
+
+- `slug` se recalcula automaticamente despues de crear el seller usando `storeName` e `id`
 
 ## `adress`
 
@@ -594,8 +690,8 @@ Despues del alta de seller, frontend debe mostrar una pantalla de confirmacion c
 
 Regla de negocio:
 
-- el seller queda en `status = pending`
-- frontend no debe habilitar dashboard seller hasta que el perfil seller tenga `status = approved`
+- el seller queda en `approvalStatus = pending`
+- frontend no debe habilitar dashboard seller hasta que el perfil seller tenga `approvalStatus = approved`
 
 ### Listado de productos
 
@@ -621,6 +717,312 @@ GET /api/categories?filters[parent][id][$null]=true&populate=children,image&sort
 GET /api/users/me?populate=seller,adresses,orders,deliveryAssigments
 ```
 
+### Seller Dashboard API
+
+Estos endpoints estan pensados para la experiencia autenticada del seller y requieren JWT en el header:
+
+```http
+Authorization: Bearer <jwt>
+```
+
+Ademas de exigir JWT, las rutas custom de seller validan que el usuario autenticado tenga rol `seller`.
+
+```http
+GET /api/sellers/me
+```
+
+Uso esperado:
+
+- cargar el perfil operativo del seller autenticado
+- leer direccion actual
+- conocer si ya tiene almacen asignado
+- mostrar cantidad real de productos
+
+Respuesta esperada:
+
+```json
+{
+  "seller": {
+    "id": 3,
+    "documentId": "xxxxx",
+    "storeName": "Mi Tienda",
+    "approvalStatus": "approved",
+    "contactPhone": "5512345678",
+    "address": {
+      "addressLine1": "Calle 1",
+      "addressLine2": "Interior 2",
+      "city": "Veracruz",
+      "state": "Veracruz",
+      "postalCode": "91700",
+      "reference": "Frente al mercado"
+    },
+    "productCount": 8,
+    "assignedWarehouse": {
+      "id": 4,
+      "documentId": "yyyyy",
+      "name": "Almacen Norte",
+      "address": "Av. Industrial 20, Veracruz"
+    },
+    "warehouseAssignmentStatus": "assigned",
+    "deliveryInstructions": "Entrega de lunes a viernes de 8:00 a 14:00"
+  }
+}
+```
+
+Reglas:
+
+- si el usuario no esta autenticado, responde `401`
+- si el usuario no tiene rol `seller` o no tiene perfil seller, responde `403`
+- si el seller existe pero `approvalStatus !== approved`, frontend debe bloquear gestion de productos
+
+#### Edicion de perfil seller
+
+```http
+PATCH /api/sellers/me/profile
+```
+
+Payload sugerido:
+
+```json
+{
+  "storeName": "Mi Tienda",
+  "contactPhone": "5512345678",
+  "address": {
+    "addressLine1": "Calle 1",
+    "addressLine2": "Interior 2",
+    "city": "Veracruz",
+    "state": "Veracruz",
+    "postalCode": "91700",
+    "reference": "Frente al mercado"
+  }
+}
+```
+
+Reglas:
+
+- no permite modificar `approvalStatus`
+- no permite modificar `assignedWarehouse`
+- no permite modificar `warehouseAssignmentStatus`
+
+#### Dashboard seller agregado
+
+```http
+GET /api/sellers/me/dashboard
+```
+
+Respuesta esperada:
+
+```json
+{
+  "seller": {
+    "storeName": "Mi Tienda",
+    "approvalStatus": "approved",
+    "productCount": 8
+  },
+  "warehouse": {
+    "assignmentStatus": "pending",
+    "name": null,
+    "deliveryInstructions": "Nuestro equipo te contactara para indicarte a que almacen entregar"
+  },
+  "actions": {
+    "canCreateProducts": true,
+    "canDeliverToWarehouse": false,
+    "canEditProfile": true
+  }
+}
+```
+
+Uso esperado:
+
+- poblar home seller mobile con una sola llamada
+- evitar que frontend combine `me + products + warehouse`
+
+#### Pantalla "Mis productos"
+
+```http
+GET /api/sellers/products
+```
+
+Uso esperado:
+
+- listar solo productos del seller autenticado
+- poblar tabla o cards de `Mis productos`
+- obtener el conteo desde `meta.total`
+
+Respuesta esperada:
+
+```json
+{
+  "items": [
+    {
+      "id": 1,
+      "name": "Tomate saladette",
+      "price": 28,
+      "stock": 30,
+      "images": [
+        {
+          "id": 10,
+          "url": "/uploads/tomate_1.jpg"
+        }
+      ],
+      "unit": "kg",
+      "isActive": true
+    }
+  ],
+  "meta": {
+    "total": 1
+  }
+}
+```
+
+#### Pantalla "Alta de producto"
+
+```http
+POST /api/sellers/products
+```
+
+Payload sugerido:
+
+```json
+{
+  "name": "Tomate saladette",
+  "description": [
+    {
+      "type": "paragraph",
+      "children": [{ "type": "text", "text": "Tomate fresco" }]
+    }
+  ],
+  "sku": "TOM-001",
+  "price": 34.5,
+  "unit": "kg",
+  "minOrderQty": 2,
+  "stock": 30,
+  "images": [1, 2, 3],
+  "category": 1
+}
+```
+
+Reglas:
+
+- el `seller` se asigna automaticamente desde el usuario autenticado
+- solo sellers con `approvalStatus = approved` pueden crear productos
+- `name` y `price` son requeridos
+- `stock` debe ser numerico y no puede ser negativo
+- `images` acepta un arreglo de ids de media ya subidos a Strapi, por ejemplo `[1, 2, 3]`
+- si `images` se manda, el backend relaciona esos archivos con `product.images`
+
+#### Edicion y activacion de producto
+
+```http
+PATCH /api/sellers/products/:id
+PATCH /api/sellers/products/:id/toggle-active
+```
+
+Uso esperado:
+
+- `PATCH /api/sellers/products/:id`: editar datos del producto propio
+- `PATCH /api/sellers/products/:id/toggle-active`: activar o desactivar rapidamente un producto desde la lista
+
+Reglas:
+
+- el seller solo puede editar productos propios
+- si el producto no pertenece al seller autenticado, responde `404`
+- solo sellers con `approvalStatus = approved` pueden modificar productos
+- `images` acepta un arreglo de ids de media ya subidos a Strapi
+- si el `PATCH` no incluye `images`, se conservan las imagenes actuales del producto
+- si el `PATCH` manda `images: []`, se limpian las imagenes asociadas
+
+Payload sugerido para update:
+
+```json
+{
+  "name": "Tomate saladette premium",
+  "price": 38,
+  "unit": "kg",
+  "minOrderQty": 1,
+  "stock": 24,
+  "images": [1, 2]
+}
+```
+
+Nota importante para frontend:
+
+- estos endpoints custom del dashboard viven en plural bajo `/api/sellers/...`
+- no usar `/api/seller/...` porque esas rutas no existen en el backend actual
+
+#### Estado logistico del seller
+
+```http
+GET /api/sellers/warehouse-assignment
+```
+
+Respuesta cuando sigue pendiente:
+
+```json
+{
+  "status": "pending",
+  "warehouse": null,
+  "message": "Estamos validando el punto de recepcion ideal para tu zona"
+}
+```
+
+Respuesta cuando ya fue asignado:
+
+```json
+{
+  "status": "assigned",
+  "warehouse": {
+    "id": 4,
+    "documentId": "yyyyy",
+    "name": "Almacen Norte",
+    "address": "Av. Industrial 20, Veracruz"
+  },
+  "deliveryInstructions": "Entrega de lunes a viernes de 8:00 a 14:00"
+}
+```
+
+#### Solicitud operativa de entrega
+
+```http
+POST /api/sellers/delivery-request
+```
+
+Payload sugerido:
+
+```json
+{
+  "notes": "Estoy listo para comenzar entregas"
+}
+```
+
+Respuesta esperada:
+
+```json
+{
+  "message": "Tu solicitud fue enviada al equipo de operaciones",
+  "status": "received"
+}
+```
+
+Reglas:
+
+- no asigna almacen
+- solo registra una solicitud operativa ligada al seller autenticado
+
+#### Endpoints internos de operaciones
+
+Estas rutas requieren JWT y rol `operations` o `admin`.
+
+```http
+GET /api/admin/sellers/:id/logistics
+PATCH /api/admin/sellers/:id/assign-warehouse
+```
+
+Uso esperado:
+
+- consultar estado logistico de un seller
+- asignar almacen e instrucciones desde backend interno
+
 ### Direcciones del usuario autenticado
 
 ```http
@@ -642,6 +1044,13 @@ GET /api/delivery-assigments?filters[deliveryUser][id][$eq]=8&populate=order
 ## Media
 
 `category.image` usa el sistema de uploads de Strapi.
+`product.images`, `seller.profileImage`, `customer.profileImage`, `delivery.profileImage` y `user.profileImage` tambien.
+
+El proveedor de almacenamiento configurado es local al proyecto:
+
+- provider: `local`
+- directorio fisico: `public/uploads`
+- URL publica base: `/uploads`
 
 Normalmente los archivos se sirven en:
 
@@ -655,7 +1064,7 @@ Si el backend devuelve una URL relativa, frontend debe anteponer el origen del b
 
 - `product`, `category`, `adress`, `order-item` y `delivery-assigment` usan draft/publish.
 - `order` y `user` no usan draft/publish.
-- `seller` no usa draft/publish y ahora controla aprobacion con `status`.
+- `seller` no usa draft/publish y ahora controla aprobacion con `approvalStatus`.
 - `description` en `product` es un campo `blocks`, no HTML plano.
 - Si los permisos del role no estan habilitados en el admin de Strapi, una ruta puede responder `403` aunque el content-type exista.
 - El registro publico debe usar `public-auth/register/customer` y `public-auth/register/seller`, no `auth/local/register`.
@@ -675,6 +1084,8 @@ export type Product = {
   price: number;
   unit?: 'kg' | 'pieza' | 'caja' | 'manojo' | 'bolsa';
   minOrderQty?: number;
+  stock?: number;
+  images?: Array<{ id: number; url: string }>;
   isActive?: boolean;
   seller?: Seller;
   category?: Category;
@@ -687,6 +1098,31 @@ export type Category = {
   slug: string;
   description?: string;
   is_active?: boolean;
+  warehouses?: Warehouse[];
+};
+
+export type Warehouse = {
+  id: number;
+  documentId: string;
+  name: string;
+  slug: string;
+  code: string;
+  description?: string;
+  address: string;
+  city: string;
+  state: string;
+  postalCode?: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  managerName?: string;
+  produceFocus?: 'fruits' | 'vegetables' | 'mixed';
+  storageMode?: 'ambient' | 'refrigerated' | 'mixed';
+  operatingHours?: string;
+  capacityKg?: number;
+  minimumTemperature?: number;
+  maximumTemperature?: number;
+  acceptedCategories?: Category[];
+  isActive?: boolean;
 };
 
 export type Seller = {
@@ -697,7 +1133,8 @@ export type Seller = {
   description?: string;
   contactPhone?: string;
   isVerified?: boolean;
-  status?: 'pending' | 'approved' | 'rejected';
+  approvalStatus?: 'pending' | 'approved' | 'rejected';
+  assignedWarehouse?: Warehouse;
 };
 
 export type Adress = {

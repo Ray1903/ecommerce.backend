@@ -1,0 +1,34 @@
+{
+  "kind": "collectionType",
+  "collectionName": "delivery_requests",
+  "info": {
+    "singularName": "delivery-request",
+    "pluralName": "delivery-requests",
+    "displayName": "Delivery Request"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "notes": {
+      "type": "text"
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": [
+        "received",
+        "in_review",
+        "resolved"
+      ],
+      "default": "received",
+      "required": true
+    },
+    "seller": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::seller.seller",
+      "inversedBy": "deliveryRequests"
+    }
+  }
+}

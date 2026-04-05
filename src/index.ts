@@ -18,6 +18,11 @@ const REQUIRED_ROLES = [
     type: 'delivery',
     description: 'Repartidor de la plataforma',
   },
+  {
+    name: 'operations',
+    type: 'operations',
+    description: 'Operaciones internas para asignacion logistica y seguimiento',
+  },
 ];
 
 export default {

@@ -1,0 +1,46 @@
+{
+  "kind": "collectionType",
+  "collectionName": "deliveries",
+  "info": {
+    "singularName": "delivery",
+    "pluralName": "deliveries",
+    "displayName": "Delivery"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "vehicleType": {
+      "type": "enumeration",
+      "enum": [
+        "bike",
+        "motorcycle",
+        "car",
+        "van",
+        "other"
+      ],
+      "default": "motorcycle"
+    },
+    "isAvailable": {
+      "type": "boolean",
+      "default": true
+    },
+    "profileImage": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "notes": {
+      "type": "text"
+    },
+    "users_permissions_user": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "delivery"
+    }
+  }
+}

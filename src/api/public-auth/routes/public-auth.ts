@@ -16,5 +16,13 @@ export default {
         auth: false,
       },
     },
+    {
+      method: 'GET',
+      path: '/public-auth/user-info',
+      handler: 'public-auth.userInfo',
+      config: {
+        auth: false,
+      },
+    }
   ],
 };

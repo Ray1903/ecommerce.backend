@@ -510,6 +510,43 @@ export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    warehouses: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::warehouse.warehouse'
+    >;
+  };
+}
+
+export interface ApiCustomerCustomer extends Struct.CollectionTypeSchema {
+  collectionName: 'customers';
+  info: {
+    displayName: 'Customer';
+    pluralName: 'customers';
+    singularName: 'customer';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::customer.customer'
+    > &
+      Schema.Attribute.Private;
+    notes: Schema.Attribute.Text;
+    profileImage: Schema.Attribute.Media<'images'>;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    users_permissions_user: Schema.Attribute.Relation<
+      'oneToOne',
+      'plugin::users-permissions.user'
+    >;
   };
 }
 
@@ -549,6 +586,79 @@ export interface ApiDeliveryAssigmentDeliveryAssigment
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+  };
+}
+
+export interface ApiDeliveryRequestDeliveryRequest
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'delivery_requests';
+  info: {
+    displayName: 'Delivery Request';
+    pluralName: 'delivery-requests';
+    singularName: 'delivery-request';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::delivery-request.delivery-request'
+    > &
+      Schema.Attribute.Private;
+    notes: Schema.Attribute.Text;
+    publishedAt: Schema.Attribute.DateTime;
+    seller: Schema.Attribute.Relation<'manyToOne', 'api::seller.seller'>;
+    status: Schema.Attribute.Enumeration<
+      ['received', 'in_review', 'resolved']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'received'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiDeliveryDelivery extends Struct.CollectionTypeSchema {
+  collectionName: 'deliveries';
+  info: {
+    displayName: 'Delivery';
+    pluralName: 'deliveries';
+    singularName: 'delivery';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    isAvailable: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::delivery.delivery'
+    > &
+      Schema.Attribute.Private;
+    notes: Schema.Attribute.Text;
+    profileImage: Schema.Attribute.Media<'images'>;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    users_permissions_user: Schema.Attribute.Relation<
+      'oneToOne',
+      'plugin::users-permissions.user'
+    >;
+    vehicleType: Schema.Attribute.Enumeration<
+      ['bike', 'motorcycle', 'car', 'van', 'other']
+    > &
+      Schema.Attribute.DefaultTo<'motorcycle'>;
   };
 }
 
@@ -655,6 +765,7 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     description: Schema.Attribute.Blocks;
+    images: Schema.Attribute.Media<'images', true>;
     isActive: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
@@ -673,6 +784,7 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     seller: Schema.Attribute.Relation<'manyToOne', 'api::seller.seller'>;
     sku: Schema.Attribute.String & Schema.Attribute.Unique;
     slug: Schema.Attribute.UID<'name'>;
+    stock: Schema.Attribute.Decimal & Schema.Attribute.DefaultTo<0>;
     unit: Schema.Attribute.Enumeration<
       ['kg', 'pieza', 'caja', 'manojo', 'bolsa']
     >;
@@ -693,10 +805,25 @@ export interface ApiSellerSeller extends Struct.CollectionTypeSchema {
     draftAndPublish: false;
   };
   attributes: {
+    address: Schema.Attribute.JSON;
+    approvalStatus: Schema.Attribute.Enumeration<
+      ['pending', 'approved', 'rejected']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'pending'>;
+    assignedWarehouse: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::warehouse.warehouse'
+    >;
     contactPhone: Schema.Attribute.String;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    deliveryInstructions: Schema.Attribute.Text;
+    deliveryRequests: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::delivery-request.delivery-request'
+    >;
     description: Schema.Attribute.String;
     isVerified: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
@@ -710,11 +837,9 @@ export interface ApiSellerSeller extends Struct.CollectionTypeSchema {
       'api::order-item.order-item'
     >;
     products: Schema.Attribute.Relation<'oneToMany', 'api::product.product'>;
+    profileImage: Schema.Attribute.Media<'images'>;
     publishedAt: Schema.Attribute.DateTime;
     slug: Schema.Attribute.UID<'storeName'>;
-    status: Schema.Attribute.Enumeration<['pending', 'approved', 'rejected']> &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<'pending'>;
     storeName: Schema.Attribute.String & Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -723,6 +848,72 @@ export interface ApiSellerSeller extends Struct.CollectionTypeSchema {
       'oneToOne',
       'plugin::users-permissions.user'
     >;
+    warehouseAssignmentStatus: Schema.Attribute.Enumeration<
+      ['pending', 'assigned']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'pending'>;
+  };
+}
+
+export interface ApiWarehouseWarehouse extends Struct.CollectionTypeSchema {
+  collectionName: 'warehouses';
+  info: {
+    description: 'Centros de almacenamiento para frutas y verduras';
+    displayName: 'Warehouse';
+    pluralName: 'warehouses';
+    singularName: 'warehouse';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    acceptedCategories: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::category.category'
+    >;
+    address: Schema.Attribute.Text & Schema.Attribute.Required;
+    capacityKg: Schema.Attribute.Decimal;
+    city: Schema.Attribute.String & Schema.Attribute.Required;
+    code: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
+    contactEmail: Schema.Attribute.Email;
+    contactPhone: Schema.Attribute.String;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    description: Schema.Attribute.Text;
+    isActive: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::warehouse.warehouse'
+    > &
+      Schema.Attribute.Private;
+    managerName: Schema.Attribute.String;
+    maximumTemperature: Schema.Attribute.Decimal;
+    minimumTemperature: Schema.Attribute.Decimal;
+    name: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
+    operatingHours: Schema.Attribute.Text;
+    postalCode: Schema.Attribute.String;
+    produceFocus: Schema.Attribute.Enumeration<
+      ['fruits', 'vegetables', 'mixed']
+    > &
+      Schema.Attribute.DefaultTo<'mixed'>;
+    publishedAt: Schema.Attribute.DateTime;
+    sellers: Schema.Attribute.Relation<'oneToMany', 'api::seller.seller'>;
+    slug: Schema.Attribute.UID<'name'>;
+    state: Schema.Attribute.String & Schema.Attribute.Required;
+    storageMode: Schema.Attribute.Enumeration<
+      ['ambient', 'refrigerated', 'mixed']
+    > &
+      Schema.Attribute.DefaultTo<'ambient'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
   };
 }
 
@@ -1191,6 +1382,8 @@ export interface PluginUsersPermissionsUser
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    customer: Schema.Attribute.Relation<'oneToOne', 'api::customer.customer'>;
+    delivery: Schema.Attribute.Relation<'oneToOne', 'api::delivery.delivery'>;
     deliveryAssigments: Schema.Attribute.Relation<
       'oneToMany',
       'api::delivery-assigment.delivery-assigment'
@@ -1215,6 +1408,7 @@ export interface PluginUsersPermissionsUser
         minLength: 6;
       }>;
     phone: Schema.Attribute.String;
+    profileImage: Schema.Attribute.Media<'images'>;
     provider: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     resetPasswordToken: Schema.Attribute.String & Schema.Attribute.Private;
@@ -1248,11 +1442,15 @@ declare module '@strapi/strapi' {
       'admin::user': AdminUser;
       'api::adress.adress': ApiAdressAdress;
       'api::category.category': ApiCategoryCategory;
+      'api::customer.customer': ApiCustomerCustomer;
       'api::delivery-assigment.delivery-assigment': ApiDeliveryAssigmentDeliveryAssigment;
+      'api::delivery-request.delivery-request': ApiDeliveryRequestDeliveryRequest;
+      'api::delivery.delivery': ApiDeliveryDelivery;
       'api::order-item.order-item': ApiOrderItemOrderItem;
       'api::order.order': ApiOrderOrder;
       'api::product.product': ApiProductProduct;
       'api::seller.seller': ApiSellerSeller;
+      'api::warehouse.warehouse': ApiWarehouseWarehouse;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;

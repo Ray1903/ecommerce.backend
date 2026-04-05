@@ -53,6 +53,12 @@
       "relation": "oneToMany",
       "target": "api::product.product",
       "mappedBy": "category"
+    },
+    "warehouses": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::warehouse.warehouse",
+      "mappedBy": "acceptedCategories"
     }
   }
 }

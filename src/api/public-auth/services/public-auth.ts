@@ -24,6 +24,8 @@ type UsersPermissionsAdvancedSettings = {
 const USER_UID = 'plugin::users-permissions.user';
 const ROLE_UID = 'plugin::users-permissions.role';
 const SELLER_UID = 'api::seller.seller';
+const CUSTOMER_UID = 'api::customer.customer';
+const DELIVERY_UID = 'api::delivery.delivery';
 
 const sanitizeUser = (user, ctx) => {
   const auth = ctx.state?.auth;
@@ -36,6 +38,38 @@ const normalizeString = (value?: string) =>
   typeof value === 'string' ? value.trim() : '';
 
 export default () => ({
+
+  async userInfo(userId: number, ctx) {
+    const user = await strapi.db.query(USER_UID).findOne({
+      where: { id: userId },
+      populate: {
+        profileImage: true,
+        role: true,
+        seller: {
+          populate: {
+            profileImage: true,
+          },
+        },
+        customer: {
+          populate: {
+            profileImage: true,
+          },
+        },
+        delivery: {
+          populate: {
+            profileImage: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      return null;
+    }
+
+    return sanitizeUser(user, ctx);
+  },
+
   async registerCustomer(payload: RegisterBaseInput, ctx) {
     const advancedSettings = (await strapi
       .store({ type: 'plugin', name: 'users-permissions' })
@@ -55,6 +89,12 @@ export default () => ({
       confirmed: !advancedSettings?.email_confirmation,
       blocked: false,
       isActive: true,
+    });
+
+    await strapi.db.query(CUSTOMER_UID).create({
+      data: {
+        users_permissions_user: newUser.id,
+      },
     });
 
     const sanitizedUser = await sanitizeUser(newUser, ctx);
@@ -116,7 +156,7 @@ export default () => ({
           contactPhone: contactPhone || baseParams.phone,
           description: description || null,
           isVerified: false,
-          status: 'pending',
+          approvalStatus: 'pending',
           users_permissions_user: createdUser.id,
         },
       });
@@ -129,7 +169,7 @@ export default () => ({
         seller: {
           id: seller.id,
           documentId: seller.documentId,
-          status: seller.status,
+          approvalStatus: seller.approvalStatus,
           storeName: seller.storeName,
         },
         role: role.type,

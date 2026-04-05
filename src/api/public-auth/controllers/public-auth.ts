@@ -1,6 +1,7 @@
 import { errors } from '@strapi/utils';
 
 const { ApplicationError } = errors;
+
 class ConflictError extends Error {}
 
 export default {
@@ -43,6 +44,31 @@ export default {
 
       strapi.log.error('Error registering seller', error);
       throw new ApplicationError('No fue posible registrar la solicitud del seller');
+    }
+  },
+
+  async userInfo(ctx) {
+    const rawUserId = ctx.query?.userId;
+    const service = strapi.service('api::public-auth.public-auth');
+
+    try {
+      const userId = Number(rawUserId);
+
+      if (!Number.isInteger(userId) || userId <= 0) {
+        return ctx.badRequest('userId es requerido y debe ser un entero positivo');
+      }
+
+      const result = await service.userInfo(userId, ctx);
+
+      if (!result) {
+        return ctx.notFound('Usuario no encontrado');
+      }
+
+      ctx.status = 200;
+      return ctx.send(result);
+    } catch (error) {
+      strapi.log.error('Error fetching user info', error);
+      return ctx.throw(500, 'No fue posible obtener la información del usuario');
     }
   },
 };

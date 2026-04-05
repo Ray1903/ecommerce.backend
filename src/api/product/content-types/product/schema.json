@@ -43,6 +43,17 @@
     "minOrderQty": {
       "type": "decimal"
     },
+    "stock": {
+      "type": "decimal",
+      "default": 0
+    },
+    "images": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": [
+        "images"
+      ]
+    },
     "isActive": {
       "type": "boolean",
       "default": true

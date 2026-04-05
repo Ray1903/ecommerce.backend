@@ -25,11 +25,21 @@
     "contactPhone": {
       "type": "string"
     },
+    "address": {
+      "type": "json"
+    },
+    "profileImage": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
     "isVerified": {
       "type": "boolean",
       "default": false
     },
-    "status": {
+    "approvalStatus": {
       "type": "enumeration",
       "enum": [
         "pending",
@@ -38,6 +48,24 @@
       ],
       "default": "pending",
       "required": true
+    },
+    "warehouseAssignmentStatus": {
+      "type": "enumeration",
+      "enum": [
+        "pending",
+        "assigned"
+      ],
+      "default": "pending",
+      "required": true
+    },
+    "deliveryInstructions": {
+      "type": "text"
+    },
+    "assignedWarehouse": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::warehouse.warehouse",
+      "inversedBy": "sellers"
     },
     "users_permissions_user": {
       "type": "relation",
@@ -55,6 +83,12 @@
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::order-item.order-item",
+      "mappedBy": "seller"
+    },
+    "deliveryRequests": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::delivery-request.delivery-request",
       "mappedBy": "seller"
     }
   }
