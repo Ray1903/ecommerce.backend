@@ -39,6 +39,104 @@ const normalizeString = (value?: string) =>
 
 export default () => ({
 
+  async login(body, ctx) {
+    const { identifier, password } = body ?? {};
+
+    if (!identifier || !password) {
+      throw new ValidationError('identifier y password son requeridos');
+    }
+
+    const normalizedIdentifier = String(identifier).trim().toLowerCase();
+
+    const user = await strapi.query('plugin::users-permissions.user').findOne({
+      where: {
+        $or: [
+          { email: normalizedIdentifier },
+          { username: normalizedIdentifier },
+        ],
+      },
+      populate: ['role', 'seller'],
+    });
+
+    if (!user) {
+      throw new ValidationError('Credenciales inválidas');
+    }
+
+    const isValidPassword = await strapi
+      .plugin('users-permissions')
+      .service('user')
+      .validatePassword(password, user.password);
+
+    if (!isValidPassword) {
+      throw new ValidationError('Credenciales inválidas');
+    }
+
+    if (user.blocked) {
+      throw new ApplicationError('Tu cuenta está bloqueada');
+    }
+
+    const pluginStore = strapi.store({
+      type: 'plugin',
+      name: 'users-permissions',
+    });
+
+    const advancedSettings = (await pluginStore.get({ key: 'advanced' })) as UsersPermissionsAdvancedSettings | null;
+
+    if (advancedSettings?.email_confirmation && !user.confirmed) {
+      throw new ApplicationError('Debes confirmar tu correo antes de iniciar sesión');
+    }
+
+    const jwt = strapi.plugin('users-permissions').service('jwt').issue({
+      id: user.id,
+    });
+
+    const resolvedRole = this.resolveUserRole(user);
+
+    return {
+      jwt,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        firstName: user.firstName ?? '',
+        phone: user.phone ?? '',
+      },
+      role: resolvedRole,
+      seller: user.seller ?? null,
+    };
+  },
+
+  resolveUserRole(user) {
+    const roleType = String(user?.role?.type ?? '')
+      .trim()
+      .toLowerCase();
+
+    const roleName = String(user?.role?.name ?? '')
+      .trim()
+      .toLowerCase();
+
+    const candidates = [roleType, roleName];
+
+    for (const value of candidates) {
+      if (!value) continue;
+
+      if (value.includes('delivery')) return 'delivery';
+      if (value.includes('seller')) return 'seller';
+      if (value.includes('customer')) return 'customer';
+      if (value.includes('operations')) return 'operations';
+      if (value.includes('authenticated')) {
+        // por si todos caen al role general authenticated
+        // abajo intentamos resolver mejor con seller
+      }
+    }
+
+    if (user?.seller) {
+      return 'seller';
+    }
+
+    return 'customer';
+  },
+
   async userInfo(userId: number, ctx) {
     const user = await strapi.db.query(USER_UID).findOne({
       where: { id: userId },

@@ -1,6 +1,6 @@
 import { errors } from '@strapi/utils';
 
-const { ApplicationError } = errors;
+const { ApplicationError, ValidationError } = errors;
 
 class ConflictError extends Error {}
 
@@ -44,6 +44,23 @@ export default {
 
       strapi.log.error('Error registering seller', error);
       throw new ApplicationError('No fue posible registrar la solicitud del seller');
+    }
+  },
+
+  async login(ctx) {
+    const service = strapi.service('api::public-auth.public-auth');
+
+    try {
+      const result = await service.login(ctx.request.body ?? {}, ctx);
+      ctx.status = 200;
+      ctx.body = result;
+    } catch (error) {
+      if (error instanceof ValidationError || error instanceof ApplicationError) {
+        throw error;
+      }
+
+      strapi.log.error('Error during login', error);
+      throw new ApplicationError('No fue posible iniciar sesión');
     }
   },
 

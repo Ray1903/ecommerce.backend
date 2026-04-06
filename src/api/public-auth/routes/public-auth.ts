@@ -17,12 +17,20 @@ export default {
       },
     },
     {
+      method: 'POST',
+      path: '/public-auth/login',
+      handler: 'public-auth.login',
+      config: {
+        auth: false,
+      },
+    },
+    {
       method: 'GET',
       path: '/public-auth/user-info',
       handler: 'public-auth.userInfo',
       config: {
         auth: false,
       },
-    }
+    },
   ],
 };
