@@ -90,6 +90,12 @@
       "relation": "oneToMany",
       "target": "api::delivery-request.delivery-request",
       "mappedBy": "seller"
+    },
+    "productModerationRequests": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::product-moderation-request.product-moderation-request",
+      "mappedBy": "seller"
     }
   }
 }

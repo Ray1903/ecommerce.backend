@@ -58,6 +58,18 @@
       "type": "boolean",
       "default": true
     },
+    "moderationStatus": {
+      "type": "enumeration",
+      "enum": [
+        "active",
+        "review_pending",
+        "deactivation_pending",
+        "deactivated",
+        "rejected"
+      ],
+      "default": "active",
+      "required": true
+    },
     "seller": {
       "type": "relation",
       "relation": "manyToOne",
@@ -74,6 +86,12 @@
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::order-item.order-item",
+      "mappedBy": "product"
+    },
+    "moderationRequests": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::product-moderation-request.product-moderation-request",
       "mappedBy": "product"
     }
   }

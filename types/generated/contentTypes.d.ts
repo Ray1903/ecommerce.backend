@@ -749,6 +749,48 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiProductModerationRequestProductModerationRequest
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'product_moderation_requests';
+  info: {
+    displayName: 'Product Moderation Request';
+    pluralName: 'product-moderation-requests';
+    singularName: 'product-moderation-request';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::product-moderation-request.product-moderation-request'
+    > &
+      Schema.Attribute.Private;
+    product: Schema.Attribute.Relation<'manyToOne', 'api::product.product'>;
+    publishedAt: Schema.Attribute.DateTime;
+    reason: Schema.Attribute.Text;
+    resolutionNotes: Schema.Attribute.Text;
+    reviewedAt: Schema.Attribute.DateTime;
+    reviewedBy: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
+    seller: Schema.Attribute.Relation<'manyToOne', 'api::seller.seller'>;
+    status: Schema.Attribute.Enumeration<['pending', 'approved', 'rejected']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'pending'>;
+    type: Schema.Attribute.Enumeration<['review', 'deactivation']> &
+      Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiProductProduct extends Struct.CollectionTypeSchema {
   collectionName: 'products';
   info: {
@@ -774,6 +816,21 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     minOrderQty: Schema.Attribute.Decimal;
+    moderationRequests: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::product-moderation-request.product-moderation-request'
+    >;
+    moderationStatus: Schema.Attribute.Enumeration<
+      [
+        'active',
+        'review_pending',
+        'deactivation_pending',
+        'deactivated',
+        'rejected',
+      ]
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'active'>;
     name: Schema.Attribute.String & Schema.Attribute.Required;
     orderItems: Schema.Attribute.Relation<
       'oneToMany',
@@ -835,6 +892,10 @@ export interface ApiSellerSeller extends Struct.CollectionTypeSchema {
     order_items: Schema.Attribute.Relation<
       'oneToMany',
       'api::order-item.order-item'
+    >;
+    productModerationRequests: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::product-moderation-request.product-moderation-request'
     >;
     products: Schema.Attribute.Relation<'oneToMany', 'api::product.product'>;
     profileImage: Schema.Attribute.Media<'images'>;
@@ -1448,6 +1509,7 @@ declare module '@strapi/strapi' {
       'api::delivery.delivery': ApiDeliveryDelivery;
       'api::order-item.order-item': ApiOrderItemOrderItem;
       'api::order.order': ApiOrderOrder;
+      'api::product-moderation-request.product-moderation-request': ApiProductModerationRequestProductModerationRequest;
       'api::product.product': ApiProductProduct;
       'api::seller.seller': ApiSellerSeller;
       'api::warehouse.warehouse': ApiWarehouseWarehouse;

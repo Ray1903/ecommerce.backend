@@ -1,0 +1,59 @@
+{
+  "kind": "collectionType",
+  "collectionName": "product_moderation_requests",
+  "info": {
+    "singularName": "product-moderation-request",
+    "pluralName": "product-moderation-requests",
+    "displayName": "Product Moderation Request"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "review",
+        "deactivation"
+      ],
+      "required": true
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending",
+      "required": true
+    },
+    "reason": {
+      "type": "text"
+    },
+    "resolutionNotes": {
+      "type": "text"
+    },
+    "reviewedAt": {
+      "type": "datetime"
+    },
+    "product": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::product.product",
+      "inversedBy": "moderationRequests"
+    },
+    "seller": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::seller.seller",
+      "inversedBy": "productModerationRequests"
+    },
+    "reviewedBy": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    }
+  }
+}

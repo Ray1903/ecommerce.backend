@@ -21,7 +21,9 @@ export default async (policyContext) => {
     return false;
   }
 
-  if (user.role?.type !== 'seller') {
+  // Compatibilidad: usuarios legacy pueden conservar role "authenticated"
+  // pero tener perfil seller real. Si existe seller profile, se permite.
+  if (!['seller', 'authenticated'].includes(String(user.role?.type ?? ''))) {
     policyContext.forbidden('El usuario autenticado no tiene permisos de seller');
     return false;
   }

@@ -33,6 +33,14 @@ export default {
       },
     },
     {
+      method: 'GET',
+      path: '/sellers/orders',
+      handler: 'seller.orders',
+      config: {
+        policies: ['global::seller-auth'],
+      },
+    },
+    {
       method: 'POST',
       path: '/sellers/products',
       handler: 'seller.createProduct',
@@ -52,6 +60,30 @@ export default {
       method: 'PATCH',
       path: '/sellers/products/:id/toggle-active',
       handler: 'seller.toggleActive',
+      config: {
+        policies: ['global::seller-auth'],
+      },
+    },
+    {
+      method: 'POST',
+      path: '/sellers/products/:id/deactivation-request',
+      handler: 'seller.requestProductDeactivation',
+      config: {
+        policies: ['global::seller-auth'],
+      },
+    },
+    {
+      method: 'GET',
+      path: '/sellers/products/:id/deactivation-request',
+      handler: 'seller.getProductDeactivationRequest',
+      config: {
+        policies: ['global::seller-auth'],
+      },
+    },
+    {
+      method: 'POST',
+      path: '/sellers/products/:id/review-request',
+      handler: 'seller.requestProductReview',
       config: {
         policies: ['global::seller-auth'],
       },
@@ -78,6 +110,14 @@ export default {
       handler: 'seller.adminLogistics',
       config: {
         policies: ['global::operations-auth'],
+      },
+    },
+    {
+      method: 'GET',
+      path: '/sellers/me/sales-metrics',
+      handler: 'seller.salesMetrics',
+      config: {
+        policies: ['global::seller-auth'],
       },
     },
     {
